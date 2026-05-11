@@ -1,0 +1,68 @@
+@model LoginViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Login";
+}
+
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-logo">
+            <div class="logo-circle" style="background:white; padding:4px;">
+                <img src="~/images/Deped.png" alt="DepEd Logo"
+                     style="width:60px; height:60px; object-fit:contain;" />
+            </div>
+        </div>
+        <div class="login-brand">
+            <h2>Department of Education</h2>
+            <p>Schools Division Office — Accounting Unit Office</p>
+            <span class="login-system-name">Digital Receiving Logbook</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert-error">
+                <i class="fas fa-exclamation-triangle"></i> @Model.ErrorMessage
+            </div>
+        }
+
+        <form asp-action="Login" method="post" class="login-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Username</label>
+                <input asp-for="Username" class="form-control" placeholder="Enter username" autocomplete="username" />
+                <span asp-validation-for="Username" class="field-error"></span>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Password</label>
+                <div class="pw-wrap">
+                    <input asp-for="Password" class="form-control" placeholder="Enter password" id="pwField" autocomplete="current-password" />
+                    <button type="button" class="toggle-pw" onclick="togglePw()"><i class="fas fa-eye" id="eyeIcon"></i></button>
+                </div>
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <p>For Accounting Unit personnel only</p>
+            <p>© 2026 DepEd Schools Division Office</p>
+            <p>Version 1.0 &nbsp;|&nbsp; Digital Receiving Logbook System</p>
+        </div>
+    </div>
+    <div class="login-bg-deco"></div>
+</div>
+
+@section Scripts {
+<script>
+function togglePw() {
+    const f = document.getElementById('pwField');
+    const i = document.getElementById('eyeIcon');
+    if (f.type === 'password') { f.type = 'text'; i.className = 'fas fa-eye-slash'; }
+    else { f.type = 'password'; i.className = 'fas fa-eye'; }
+}
+</script>
+}

@@ -1,0 +1,107 @@
+@{
+    ViewData["Title"] = "Audit Trail — All Units";
+    var logs       = ViewBag.Logs as List<DepEdLogbook.Models.AuditLog> ?? new();
+    var units      = ViewBag.Units as List<string> ?? new();
+    var filterUnit = ViewBag.FilterUnit as string;
+    int curPage    = ViewBag.CurrentPage;
+    int totalPages = ViewBag.TotalPages;
+}
+
+<section class="logbook-section" style="max-width:1100px;margin:2rem auto;">
+    <div class="section-header">
+        <h2><i class="fas fa-clipboard-list"></i> Audit Trail — All Units</h2>
+        <a asp-action="Accounts" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Accounts</a>
+    </div>
+
+    <div class="filter-bar" style="margin-bottom:1rem;">
+        <div class="filter-group">
+            <label><i class="fas fa-filter"></i> Filter by Unit</label>
+            <select id="unitFilter" class="form-control sm" onchange="applyFilter()">
+                <option value="">-- All Units --</option>
+                @foreach (var u in units)
+                {
+                    if (filterUnit == u)
+                    {
+                        <option value="@u" selected>@u</option>
+                    }
+                    else
+                    {
+                        <option value="@u">@u</option>
+                    }
+                }
+            </select>
+        </div>
+        @if (!string.IsNullOrEmpty(filterUnit))
+        {
+            <a asp-action="AuditTrail" class="btn-clear"><i class="fas fa-times"></i> Clear</a>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="logbook-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Unit</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                    <th>Performed By</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!logs.Any())
+                {
+                    <tr><td colspan="6" class="empty-state"><i class="fas fa-inbox fa-2x"></i><br/>No audit logs found.</td></tr>
+                }
+                @{ int n = (curPage - 1) * 20 + 1; }
+                @foreach (var log in logs)
+                {
+                    <tr>
+                        <td class="row-num">@n</td>
+                        <td><span class="dept-badge">@log.Unit</span></td>
+                        <td>
+                            <span class="action-badge action-@log.Action.ToLower().Replace("_","-")">
+                                @log.Action
+                            </span>
+                        </td>
+                        <td style="max-width:300px;font-size:.83rem;">@log.Details</td>
+                        <td><i class="fas fa-user fa-xs"></i> @log.PerformedBy</td>
+                        <td class="datetime-cell">
+                            <span class="date-part">@log.Timestamp.ToString("MMM dd, yyyy")</span><br/>
+                            <span class="time-part">@log.Timestamp.ToString("hh:mm:ss tt")</span>
+                        </td>
+                    </tr>
+                    n++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <div class="pagination-bar">
+            @if (curPage > 1)
+            {
+                <a asp-action="AuditTrail" asp-route-page="@(curPage-1)" asp-route-filterUnit="@filterUnit" class="page-btn"><i class="fas fa-chevron-left"></i></a>
+            }
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                <a asp-action="AuditTrail" asp-route-page="@p" asp-route-filterUnit="@filterUnit" class="page-btn @(p==curPage?"active":"")">@p</a>
+            }
+            @if (curPage < totalPages)
+            {
+                <a asp-action="AuditTrail" asp-route-page="@(curPage+1)" asp-route-filterUnit="@filterUnit" class="page-btn"><i class="fas fa-chevron-right"></i></a>
+            }
+        </div>
+    }
+</section>
+
+@section Scripts {
+<script>
+function applyFilter() {
+    const unit = document.getElementById('unitFilter').value;
+    window.location.href = '/Admin/AuditTrail?filterUnit=' + encodeURIComponent(unit);
+}
+</script>
+}

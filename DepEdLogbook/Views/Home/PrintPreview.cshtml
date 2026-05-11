@@ -1,0 +1,168 @@
+@{
+    Layout = null;
+    var entries      = ViewBag.Entries as List<DepEdLogbook.Models.LogbookEntry> ?? new();
+    var unitFullName = ViewBag.UnitFullName as string ?? "";
+    var printDate    = ViewBag.PrintDate as string ?? "";
+    var filterFrom   = ViewBag.FilterFrom as string;
+    var filterTo     = ViewBag.FilterTo as string;
+    var filterDept   = ViewBag.FilterDept as string;
+    var filterDocType = ViewBag.FilterDocType as string;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" type="image/x-icon" href="~/favicon/DepEd.ico" alt="DepEd Logo" />
+<title>Logbook Print — @unitFullName</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #000; background: #fff; }
+
+.print-header { text-align: center; margin-bottom: 12px; border-bottom: 2px solid #003087; padding-bottom: 10px; }
+.print-header h1 { font-size: 14px; font-weight: 700; color: #003087; margin-bottom: 2px; }
+.print-header h2 { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 2px; }
+.print-header p  { font-size: 10px; color: #666; }
+
+.print-meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 10px; color: #555; }
+.filter-info { font-size: 10px; color: #555; margin-bottom: 8px; }
+.filter-info span { margin-right: 12px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 10px; }
+thead tr { background: #003087; color: white; }
+th { padding: 6px 5px; text-align: left; font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: .03em; border: 1px solid #002070; }
+td { padding: 5px; border: 1px solid #ddd; vertical-align: middle; }
+tbody tr:nth-child(even) { background: #f5f8ff; }
+.row-num { text-align: center; font-weight: 700; color: #000000; background: #f0f0f0; }
+.dept-cell { font-weight: 700; color: #003087; font-size: 9.5px; }
+.created-by { font-size: 8.5px; color: #888; display: block; margin-top: 2px; }
+.doc-type { font-weight: 600; color: #1565c0; }
+.doc-code { font-size: 9px; color: #7a5a00; background: #fff8e1; border: 1px solid #e0a410; border-radius: 3px; padding: 1px 5px; display: inline-block; margin-top: 2px; }
+.remarks-cell { color: #666; font-style: italic; }
+.empty-state { text-align: center; padding: 20px; color: #999; }
+
+.print-footer { margin-top: 16px; border-top: 1px solid #ccc; padding-top: 8px; display: flex; justify-content: space-between; font-size: 9px; color: #888; }
+
+.no-print { position: fixed; top: 12px; right: 12px; z-index: 999; display: flex; gap: 8px; }
+.btn-do-print { background: #003087; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+.btn-do-print:hover { background: #0045b5; }
+.btn-close-print { background: #fff; color: #555; border: 1.5px solid #ccc; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+.btn-close-print:hover { background: #f5f5f5; }
+
+@@media print {
+    .no-print { display: none !important; }
+    body { font-size: 10px; }
+    @@page { margin: 1.5cm; size: A4 landscape;
+            @@bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 9px;
+                color: #888;}
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- PRINT / CLOSE BUTTONS -->
+<div class="no-print">
+    <button class="btn-close-print" onclick="window.close()"><i>✕</i> Close</button>
+    <button class="btn-do-print" onclick="window.print()">🖨 Print</button>
+</div>
+
+<!-- HEADER -->
+<div class="print-header">
+    <h1>Department of Education — Schools Division Office</h1>
+    <h2>Digital Receiving Logbook — @unitFullName</h2>
+    <p>Printed on: @printDate</p>
+</div>
+
+<!-- FILTER INFO -->
+@if (!string.IsNullOrEmpty(filterFrom) || !string.IsNullOrEmpty(filterTo) ||
+     !string.IsNullOrEmpty(filterDept) || !string.IsNullOrEmpty(filterDocType))
+{
+    <div class="filter-info">
+        <strong>Filters Applied:</strong>
+        @if (!string.IsNullOrEmpty(filterFrom)) { <span>From: @filterFrom</span> }
+        @if (!string.IsNullOrEmpty(filterTo))   { <span>To: @filterTo</span> }
+        @if (!string.IsNullOrEmpty(filterDept)) { <span>Department: @filterDept</span> }
+        @if (!string.IsNullOrEmpty(filterDocType)) { <span>Doc Type: @filterDocType</span> }
+    </div>
+}
+
+<div class="print-meta">
+    <span>
+        <strong>Total Entries:</strong> @entries.Count
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <strong>Total Documents:</strong> @entries.Sum(e => e.Documents.Count)
+    </span>
+</div>
+
+<!-- TABLE -->
+<table>
+    <thead>
+        <tr>
+            <th style="width:30px">#</th>
+            <th style="width:160px">Department / Office</th>
+            <th style="width:90px">Date Received</th>
+            <th style="width:70px">Time</th>
+            <th style="width:80px">Received By</th>
+            <th style="width:140px">Document Type</th>
+            <th style="width:70px">Doc Code</th>
+            <th>Particulars</th>
+            <th style="width:150px">Remarks</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (!entries.Any())
+        {
+            <tr><td colspan="10" class="empty-state">No logbook entries found.</td></tr>
+        }
+        @{ int rowNum = 1; }
+        @foreach (var entry in entries)
+        {
+            var docCount = entry.Documents.Count;
+            for (int di = 0; di < docCount; di++)
+            {
+                var doc = entry.Documents[di];
+                <tr>
+                    @if (di == 0)
+                    {
+                        <td rowspan="@docCount" class="row-num">@rowNum</td>
+                        <td rowspan="@docCount" class="dept-cell">
+                            @entry.Department
+                            <span class="created-by">✏ @entry.CreatedBy</span>
+                        </td>
+                        <td rowspan="@docCount">@entry.DateTimeReceived.ToString("MMM dd, yyyy")</td>
+                        <td rowspan="@docCount">@entry.DateTimeReceived.ToString("hh:mm tt")</td>
+                        <td rowspan="@docCount">@entry.ReceivedBy</td>
+                    }
+                    <td>
+                        <span class="doc-type">@doc.DocumentType</span>
+                        @if (!string.IsNullOrEmpty(doc.DocCode))
+                        {
+                            <br/><span class="doc-code">@doc.DocCode</span>
+                        }
+                    </td>
+                    <td>@(string.IsNullOrEmpty(doc.DocCode) ? "—" : doc.DocCode)</td>
+                    <td>@doc.Particulars</td>
+                    <td class="remarks-cell">@(string.IsNullOrEmpty(doc.Remarks) ? "—" : doc.Remarks)</td>
+                </tr>
+            }
+            rowNum++;
+        }
+    </tbody>
+</table>
+
+<!-- FOOTER -->
+<div class="print-footer">
+    <span>DepEd SDO Accounting Office — Digital Receiving Logbook</span>
+    <span>Generated: @printDate</span>
+</div>
+
+<script>
+// Auto-open print dialog (optional — comment out if not wanted)
+// Add page numbers
+</script>
+</body>
+</html>

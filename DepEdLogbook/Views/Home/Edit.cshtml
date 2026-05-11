@@ -1,0 +1,250 @@
+@model LogbookEntryFormModel
+@{
+    ViewData["Title"] = "Edit Entry";
+    var entryId = ViewBag.EntryId;
+
+    var depts = new (string FullName, string Acronym)[]
+    {
+        ("Schools Division Office", "SDO"),
+        ("Assistant Schools Division Superintendent", "ASDS"),
+        ("Records Section", "RECORDS"),
+        ("Human Resource Section", "HR"),
+        ("Learning Resources Section", "LR"),
+        ("School Governance and Operations Division", "SGOD"),
+        ("Curriculum and Instruction Division", "CID"),
+        ("Budget Section", "BUDGET"),
+        ("Bids and Awards Committee", "BAC"),
+        ("Cash Section", "CASH"),
+        ("Administrative Division", "ADMIN"),
+        ("Schools Division Superintendent", "SDS"),
+        ("Supply and Property Unit", "SUPPLY & PROPERTY UNIT"),
+        ("Legal Unit", "LEGAL UNIT"),
+    };
+
+    var receivers = new[]
+    {
+        "Sir Ketch", "Sir Carl", "Sir Harlan", "Sir Rob", "Sir Mak",
+        "Ma'am Tin", "Ma'am Eli", "Ma'am Zyle", "Ma'am She"
+    };
+
+    var docTypes = new[]
+    {
+        "Request Letter", "Letter of Introduction (LOI)", "Transmittal Letter",
+        "Justification Letter", "Demand Letter",
+        "Disbursement Voucher (DV)", "Obligation Request and Status (ORS)",
+        "Payroll Register", "Daily Time Record (DTR)", "Purchase Request (PR)",
+        "Purchase Order (PO)", "Inspection and Acceptance Report (IAR)",
+        "Inventory Custodian Slip (ICS)", "Property Acknowledgment Receipt (PAR)",
+        "Liquidation Report (LR)", "Cash Disbursement Register (CDR)",
+        "Bank Reconciliation Statement", "Trial Balance",
+        "Statement of Expenditures (SOE)",
+        "Registry of Allotments, Obligations, and Disbursements (RAOD)",
+        "Official Receipt (OR)", "Sales Invoice (SI)", "Bidding Documents",
+        "Notarized Contracts", "Program of Works (POW)",
+        "Certificate of Appearance", "Travel Order",
+        "BIR Form 2306", "BIR Form 2307", "Summary of Tax Withheld",
+        "Notice of Salary Adjustment (NOSA)", "Notice of Step Increment (NOSI)",
+        "Service Record", "Appointment (CS Form No. 33)"
+    };
+}
+
+<section class="form-section" style="max-width:960px;margin:2rem auto;">
+    <div class="section-header">
+        <h2><i class="fas fa-edit"></i> Edit Logbook Entry #@entryId</h2>
+        <a asp-action="Index" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Logbook</a>
+    </div>
+
+    <form asp-action="Edit" asp-route-id="@entryId" method="post" id="editForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert-error mb-2"></div>
+
+        <div class="form-row">
+            <div class="form-group flex-2">
+                <label class="form-label"><i class="fas fa-building"></i> Department / Office</label>
+                <div class="combo-wrap">
+                    <input type="text" name="Department" id="deptInput" class="form-control"
+                           placeholder="Type or select department..."
+                           value="@Model.Department" autocomplete="off" />
+                    <i class="fas fa-chevron-down combo-arrow"></i>
+                    <div id="deptDropdown" class="dept-dropdown" style="display:none;"></div>
+                </div>
+            </div>
+            <div class="form-group flex-1">
+                <label class="form-label"><i class="fas fa-calendar-alt"></i> Date & Time Received</label>
+                <input type="datetime-local" name="DateTimeReceived" class="form-control"
+                       value="@Model.DateTimeReceived.ToString("yyyy-MM-ddTHH:mm")" required />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group flex-2">
+                <label class="form-label"><i class="fas fa-user-check"></i> Received By</label>
+                <div class="combo-wrap">
+                    <select name="ReceivedBy" class="form-control" required>
+                        <option value="">-- Select Receiver --</option>
+                        @foreach (var r in receivers)
+                        {
+                            if (Model.ReceivedBy == r)
+                            {
+                                <option value="@r" selected>@r</option>
+                            }
+                            else
+                            {
+                                <option value="@r">@r</option>
+                            }
+                        }
+                    </select>
+                    <i class="fas fa-chevron-down combo-arrow"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-table-wrap">
+            <div class="doc-table-header" style="grid-template-columns:200px 150px 1fr 1fr 40px;">
+                <span>Document Type <span style="color:#fca5a5">*</span></span>
+                <span>Doc Code</span>
+                <span>Particulars <span style="color:#fca5a5">*</span></span>
+                <span>Remarks</span>
+                <span></span>
+            </div>
+            <div id="docRows">
+                @for (int i = 0; i < Model.Documents.Count; i++)
+                {
+                    <div class="doc-row" style="grid-template-columns:200px 150px 1fr 1fr 40px;">
+                        <div class="combo-wrap" style="position:relative;">
+                            <input type="text" name="Documents[@i].DocumentType"
+                                   class="form-control doc-type-input"
+                                   value="@Model.Documents[i].DocumentType"
+                                   placeholder="Type or select..." autocomplete="off" required />
+                            <i class="fas fa-chevron-down combo-arrow"></i>
+                            <div class="gen-dropdown" style="display:none;"></div>
+                        </div>
+                        <input type="text" name="Documents[@i].DocCode" class="form-control"
+                               value="@(Model.Documents[i].DocCode ?? "")" placeholder="Optional" />
+                        <input type="text" name="Documents[@i].Particulars" class="form-control"
+                               value="@Model.Documents[i].Particulars" placeholder="Particulars" required />
+                        <input type="text" name="Documents[@i].Remarks" class="form-control"
+                               value="@Model.Documents[i].Remarks" placeholder="Optional" />
+                        <button type="button" class="btn-remove-row" onclick="removeRow(this)"
+                                @(Model.Documents.Count == 1 ? "disabled" : "") title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn-add-row" onclick="addDocRow()">
+                <i class="fas fa-plus"></i> Add Row
+            </button>
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-save"></i> Update Entry
+            </button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+<script>
+const departments = [
+    @foreach (var d in depts) {
+        <text>{ fullName: "@d.FullName", acronym: "@d.Acronym" },</text>
+    }
+];
+
+const docTypes = [
+    @foreach (var t in docTypes) {
+        <text>"@t",</text>
+    }
+];
+
+// ── DEPT COMBO ────────────────────────────────────────────────────────────────
+const deptInput    = document.getElementById('deptInput');
+const deptDropdown = document.getElementById('deptDropdown');
+
+function renderDepts(matches) {
+    if (!matches.length) { deptDropdown.style.display = 'none'; return; }
+    deptDropdown.innerHTML = matches.map(d =>
+        `<div class="dept-option" data-value="${d.fullName} (${d.acronym})">
+            <span class="dept-acronym-badge">${d.acronym}</span>
+            <span>${d.fullName}</span>
+         </div>`
+    ).join('');
+    deptDropdown.querySelectorAll('.dept-option').forEach(opt => {
+        opt.addEventListener('mousedown', e => {
+            e.preventDefault(); deptInput.value = opt.dataset.value; deptDropdown.style.display = 'none';
+        });
+    });
+    deptDropdown.style.display = 'block';
+}
+deptInput.addEventListener('click',  () => renderDepts(deptInput.value.trim() ? departments.filter(d => d.fullName.toLowerCase().includes(deptInput.value.toLowerCase()) || d.acronym.toLowerCase().includes(deptInput.value.toLowerCase())) : departments));
+deptInput.addEventListener('input',  () => renderDepts(deptInput.value.trim() ? departments.filter(d => d.fullName.toLowerCase().includes(deptInput.value.toLowerCase()) || d.acronym.toLowerCase().includes(deptInput.value.toLowerCase())) : departments));
+deptInput.addEventListener('blur',   () => setTimeout(() => deptDropdown.style.display = 'none', 150));
+
+// ── DOC TYPE COMBO ────────────────────────────────────────────────────────────
+function renderDocTypes(matches, dropEl, inputEl) {
+    if (!matches.length) { dropEl.style.display = 'none'; return; }
+    dropEl.innerHTML = matches.map(t =>
+        `<div class="dept-option" data-value="${t}"><span>${t}</span></div>`
+    ).join('');
+    dropEl.querySelectorAll('.dept-option').forEach(opt => {
+        opt.addEventListener('mousedown', e => {
+            e.preventDefault(); inputEl.value = opt.dataset.value; dropEl.style.display = 'none';
+        });
+    });
+    dropEl.style.display = 'block';
+}
+
+function initDocTypeCombo(inputEl) {
+    const drop = inputEl.closest('.combo-wrap').querySelector('.gen-dropdown');
+    inputEl.addEventListener('click',  () => { const q = inputEl.value.trim().toLowerCase(); renderDocTypes(q ? docTypes.filter(t => t.toLowerCase().includes(q)) : docTypes, drop, inputEl); });
+    inputEl.addEventListener('input',  () => { const q = inputEl.value.trim().toLowerCase(); renderDocTypes(q ? docTypes.filter(t => t.toLowerCase().includes(q)) : docTypes, drop, inputEl); });
+    inputEl.addEventListener('blur',   () => setTimeout(() => drop.style.display = 'none', 150));
+}
+
+document.querySelectorAll('.doc-type-input').forEach(initDocTypeCombo);
+
+// ── ROW MANAGEMENT ────────────────────────────────────────────────────────────
+let rowIndex = @Model.Documents.Count;
+
+function addDocRow() {
+    const container = document.getElementById('docRows');
+    const div = document.createElement('div');
+    div.className = 'doc-row';
+    div.style.gridTemplateColumns = '200px 150px 1fr 1fr 40px';
+    div.innerHTML = `
+        <div class="combo-wrap">
+            <select name="Documents[${rowIndex}].DocumentType" class="form-control doc-type-select" required>
+                <option value="">-- Select Type --</option>
+                ${docTypes.map(t => `<option value="${t}">${t}</option>`).join('')}
+            </select>
+            <i class="fas fa-chevron-down combo-arrow"></i>
+        </div>
+        <input type="text" name="Documents[${rowIndex}].DocCode" class="form-control" placeholder="Optional" />
+        <input type="text" name="Documents[${rowIndex}].Particulars" class="form-control" placeholder="Particulars" required />
+        <input type="text" name="Documents[${rowIndex}].Remarks" class="form-control" placeholder="Optional" />
+        <button type="button" class="btn-remove-row" onclick="removeRow(this)" title="Remove">
+            <i class="fas fa-times"></i>
+        </button>`;
+    container.appendChild(div);
+    initDocTypeCombo(div.querySelector('.doc-type-input'));
+    rowIndex++;
+    updateRemoveButtons();
+}
+
+function removeRow(btn) { btn.closest('.doc-row').remove(); reindexRows(); updateRemoveButtons(); }
+
+function reindexRows() {
+    document.querySelectorAll('#docRows .doc-row').forEach((r, i) => {
+        r.querySelectorAll('input').forEach(inp => inp.name = inp.name.replace(/\[\d+\]/, `[${i}]`));
+    });
+    rowIndex = document.querySelectorAll('#docRows .doc-row').length;
+}
+
+function updateRemoveButtons() {
+    const rows = document.querySelectorAll('#docRows .doc-row');
+    rows.forEach(r => { r.querySelector('.btn-remove-row').disabled = rows.length === 1; });
+}
+</script>
+}

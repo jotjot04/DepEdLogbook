@@ -1,0 +1,49 @@
+@model List<DepEdLogbook.Models.AppUser>
+@{
+    ViewData["Title"] = "Manage Accounts";
+}
+
+<section class="logbook-section" style="max-width:900px;margin:2rem auto;">
+    <div class="section-header">
+        <h2><i class="fas fa-users-cog"></i> Manage Unit Accounts</h2>
+        <span class="record-count">@Model.Count unit(s)</span>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-success mb-2"><i class="fas fa-check-circle"></i> @TempData["Success"]</div>
+    }
+
+    <div class="table-responsive">
+        <table class="logbook-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Unit</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    var u = Model[i];
+                    <tr>
+                        <td class="row-num">@(i + 1)</td>
+                        <td><span class="dept-badge">@u.Unit</span></td>
+                        <td>@u.UnitFullName</td>
+                        <td><code>@u.Username</code></td>
+                        <td><code>@u.Password</code></td>
+                        <td class="actions-cell">
+                            <a asp-action="EditAccount" asp-route-id="@u.Id" class="btn-edit" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
