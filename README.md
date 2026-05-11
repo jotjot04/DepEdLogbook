@@ -1,5 +1,6 @@
 # DepEd SDO Accounting — Digital Receiving Logbook
 ## ASP.NET Core MVC Web Application
+## FOR Local host only(Same Wifi Server)
 
 ### 🔐 Login Credentials
 | Field    | Value            |
